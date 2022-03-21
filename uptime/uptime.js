@@ -88,10 +88,3 @@ setInterval(function(){
 
 
 module.exports = produce
-
-
-
-
-// 'https://train.gordon.army.mil/webapps/ssi/wp-content/uploads/2020/11/eMILPO-User-Manual.pdf'
-// 'https://ssilrc.army.mil'
-// https://clle.blackboard.com/
