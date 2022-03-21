@@ -1,0 +1,13 @@
+{
+    "name": "uptime",
+    "version": "0.1.0",
+    "main": "uptime.js",
+    "scripts": {
+      "start": "node uptime.js"
+    },
+    "license": "ISC",
+    "dependencies": {
+        "bent": "^7.3.12",
+        "kafkajs": "^1.15.0"
+    }
+  }

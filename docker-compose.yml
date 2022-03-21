@@ -1,0 +1,96 @@
+version: "3.9"  # optional since v1.27.0
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181"
+    depends_on:
+      - db
+    networks:
+      internalnet:
+        ipv4_address: 172.29.0.2
+
+  lrc-uptime:
+    image: wurstmeister/kafka
+    ports:
+      - "9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: lrc-uptime
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LOG_DIRS: /kafka/logs
+      KAFKA_BROKER_ID: 0
+      KAFKA_offsets_topic_replication_factor: 1
+      KAFKA_CREATE_TOPICS: "uptime:1:1"
+    networks:
+      internalnet:
+        ipv4_address: 172.29.0.3
+
+  uptime:
+    restart: always
+    build:
+      context: ./uptime
+      dockerfile: Dockerfile-uptime
+    depends_on:
+      - lrc-uptime
+      - consumer
+    networks:
+      internalnet:
+        ipv4_address: 172.29.0.4
+
+  consumer:
+    restart: always
+    build:
+      context: ./consumer
+      dockerfile: Dockerfile-consumer
+    depends_on:
+      - lrc-uptime
+    networks:
+      internalnet:
+        ipv4_address: 172.29.0.5
+
+  api:
+    restart: always
+    build:
+      context: ./api
+      dockerfile: Dockerfile-api
+    depends_on:
+      - db
+      - uptime
+    ports: 
+      - "127.0.0.1:3300:3300"
+    networks:
+      internalnet:
+        ipv4_address: 172.29.0.7
+    
+  db:
+    image: mysql:5.7
+    platform: linux/amd64
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'uptime'
+      MYSQL_ROOT_USER: 'root'
+      MYSQL_ROOT_PASSWORD: 'password'
+      MYSQL_PASSWORD: 'password'
+    ports:
+      - '3306:3306'
+    expose:
+      - '3306'
+    volumes:
+        - ./init.sql:/data/application/init.sql
+    command: --init-file /data/application/init.sql
+    networks:
+      internalnet:
+        ipv4_address: 172.29.0.6
+
+volumes:
+  uptime-db:
+
+networks:
+  internalnet:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.29.0.0/16
